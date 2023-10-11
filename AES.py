@@ -5,7 +5,7 @@
 # Student names: Emmanuel Mukeh, Job Stouthart
 # Student numbers: 13461869, ......
 # Date: 11/10/2023
-# Comments: The source used for this implementation is https://doi.org/10.6028/NIST.FIPS.197-upd1
+# Comments: The document with the AES guidlines used for this implementation is https://doi.org/10.6028/NIST.FIPS.197-upd1
 
 from collections import deque
 import numpy as np
@@ -66,12 +66,17 @@ def Mixcolumns(state):
 
 
 def gmul(a, b):
+    """Calculates Galios field modulo multiplication between byte a and b (which can be
+    either 1, 2 or 3 because those are the values the ModBox is comprised of)"""
     if b == 1:
         return a
-    tmp = (a << 1) & 0xFF
     if b == 2:
-        return tmp if a < 128 else tmp ^ 0x1B
+        # Left shift which is the first step for modulo multiplication, also check if the result is below 256 (& 0xFF)
+        xtime = (a << 1) & 0xFF
+        # If a is smaller then 0x80 (128) then the modulo is already reduced, if not it can be reduced by XOR'ing with 0x1B
+        return xtime if a < 128 else xtime ^ 0x1B
     if b == 3:
+        # Xor a with xtime modulo multiplication since {a}{03} = {a}{x + 1} = {a}{02} ^ {a}
         return gmul(a, 2) ^ a
 
 
