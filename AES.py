@@ -3,7 +3,7 @@
 #
 #
 # Student names: Emmanuel Mukeh, Job Stouthart
-# Student numbers: 13461869, ......
+# Student numbers: 13461869, 13999788
 # Date: 11/10/2023
 # Comments: The document with the AES guidlines used for this implementation is https://doi.org/10.6028/NIST.FIPS.197-upd1
 
@@ -66,8 +66,12 @@ def Mixcolumns(state):
 
 
 def gmul(a, b):
+<<<<<<< HEAD
     """Calculates Galios field modulo multiplication between byte a and b (which can be
     either 1, 2 or 3 because those are the values the ModBox is comprised of)"""
+=======
+    """Multiplies two bytes in the Galois field and returns the result."""
+>>>>>>> 5dc508fb4026ed8e79ec89ae22784c41f1467930
     if b == 1:
         return a
     if b == 2:
