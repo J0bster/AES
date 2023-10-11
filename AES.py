@@ -53,6 +53,8 @@ def Mixcolumns(state):
     multiplication and returns that State."""
     i_column = 0
     tmp = np.copy(state.T)
+
+    # for every byte in the column, the multiplication is done with the values in the modbox
     for column in tmp:
         for j in range(4):
             result = 0
