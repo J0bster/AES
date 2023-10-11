@@ -3,7 +3,7 @@
 #
 #
 # Student names: Emmanuel Mukeh, Job Stouthart
-# Student numbers: 13461869, 13153900
+# Student numbers: 13461869, ......
 # Date: 11/10/2023
 # Comments: The source used for this implementation is https://doi.org/10.6028/NIST.FIPS.197-upd1
 
@@ -11,7 +11,7 @@ from collections import deque
 import numpy as np
 from Constants import SBOX, MODBOX, KEY
 
-# Set the way integers are printed to hexadecimals
+# Set that integers are printed as hexadecimals
 np.set_printoptions(formatter={"int": hex})
 
 # Constants for AES algorithm
