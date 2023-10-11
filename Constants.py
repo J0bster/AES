@@ -1,3 +1,11 @@
+# Introduction to Security: Implementation of the AES algorithm
+#
+#
+#
+# Student names: Emmanuel Mukeh, Job Stouthart
+# Student numbers: 13461869, 13999788
+# Date: 11/10/2023
+
 # Given table used to substitute bytes in the SubBytes function
 SBOX = [
     # Row 0
