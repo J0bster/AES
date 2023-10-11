@@ -3,7 +3,7 @@
 #
 #
 # Student names: Emmanuel Mukeh, Job Stouthart
-# Student numbers: 13461869, ......
+# Student numbers: 13461869, 13999788
 # Date: 11/10/2023
 # Comments: The source used for this implementation is https://doi.org/10.6028/NIST.FIPS.197-upd1
 
