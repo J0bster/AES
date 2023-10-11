@@ -6,6 +6,8 @@
 # Student numbers: 13461869, 13999788
 # Date: 11/10/2023
 # Comments: The document with the AES guidlines used for this implementation is https://doi.org/10.6028/NIST.FIPS.197-upd1
+# Motivation for design choices: We choice to implement the AES in python because in python you can easily use np.arrays in
+#                                the calculations for this algorithm, plus the functions are easy to follow in python.
 
 from collections import deque
 import numpy as np
