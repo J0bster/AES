@@ -66,6 +66,7 @@ def Mixcolumns(state):
 
 
 def gmul(a, b):
+    """Multiplies two bytes in the Galois field and returns the result."""
     if b == 1:
         return a
     tmp = (a << 1) & 0xFF
