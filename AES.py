@@ -1,26 +1,46 @@
+# Introduction to Security: Implementation of the AES algorithm
+#
+#
+#
+# Student names: Emmanuel Mukeh, Job Stouthart
+# Student numbers: 13461869, 13153900
+# Date: 11/10/2023
+# Comments: The source used for this implementation is https://doi.org/10.6028/NIST.FIPS.197-upd1
+
 from collections import deque
 import numpy as np
 from Constants import SBOX, MODBOX, KEY
 
+# Set the way integers are printed to hexadecimals
 np.set_printoptions(formatter={"int": hex})
 
-NB = 4
-NR = 10
-NK = 4
+# Constants for AES algorithm
+NB = 4  # Number of columns (32-bit, i.e. 4-byte, words) comprising the State
+NR = 10  # Number of rounds
+NK = 4  # Number of 32-bit words comprising the Cipher Key
 
 
 def SubBytes(state):
-    for i, j in enumerate(state):
+    """Substitutes every byte in the State using the imported substitution
+    table (S-box) and returns that State."""
+
+    for x, row in enumerate(state):
         y = 0
-        for number in j:
-            a = number >> 4
-            b = number & 0x0F
-            state[i][y] = SBOX[a][b]
+
+        for val in row:
+            # Checks y (column) index in the S-box for a value using the and operator with 0x0F since y goes up to 0x0F (= 1111 binary).
+            sbox_y = val & 0x0F
+            # Right-shift of 4 for to get x (row). Thus val = 0x10 (= 10000 binary), which is 1 greater then 0x0F, gets x = 0x01 (2nd row).
+            sbox_x = val >> 4
+            state[x][y] = SBOX[sbox_x][sbox_y]
             y += 1
     return state
 
 
 def ShiftRows(state):
+    """Shifts rows of a State n amount of times depending on the index of
+    the row and returns that State."""
+
     for i, j in enumerate(state):
         items = deque(j)
         items.rotate(-i)
@@ -28,26 +48,18 @@ def ShiftRows(state):
     return state
 
 
-def InvShiftRows(state):
-    for i, j in enumerate(state):
-        items = deque(j)
-        items.rotate(i)
-        state[i] = list(items)
-    # print(state)
-    return state
-
-
 def Mixcolumns(state):
-    column = 0
-    temp = np.copy(state.T)
-    for c in temp:
-        answer = 0
+    """Multiplies each column of the state with the imported ModBox using galios field
+    multiplication and returns that State."""
+    i_column = 0
+    tmp = np.copy(state.T)
+    for column in tmp:
         for j in range(4):
-            answer = 0
-            for a, i in zip(c, range(4)):
-                answer ^= gmul(a, MODBOX[j][i])
-            state[j][column] = answer
-        column += 1
+            result = 0
+            for byte, i in zip(column, range(4)):
+                result ^= gmul(byte, MODBOX[j][i])
+            state[j][i_column] = result
+        i_column += 1
     return state
 
 
@@ -62,37 +74,42 @@ def gmul(a, b):
 
 
 def AddRoundKey(state, roundkey):
-    """ "Transformation in the Cipher and Inverse Cipher in which a Round
-    Key is added to the State using an XOR operation. The length of a
-    Round Key equals the size of the State (i.e., for Nb = 4, the Round
-    Key length equals 128 bits/16 bytes).
-    """
-    for i in range(4):
-        for j in range(4):
+    """Adds the RoundKey to the State using an XOR operation and returns the state.
+    The length of a Round Key equals the size of the State (NB)."""
+
+    for i in range(NB):
+        for j in range(NB):
             state[i][j] ^= roundkey[j][i]
     return state
 
 
 def Rotword(word):
-    word = deque(word)
-    word.rotate(-1)
-    return np.array(word)
+    """Rolls a word (column) of a State and returns the word."""
+
+    word = np.roll(word, -1)
+    return word
 
 
 def Subword(word):
-    i = 0
-    for number in word:
-        a = number >> 4
-        b = number & 0x0F
-        word[i] = SBOX[a][b]
-        i += 1
+    """Does the SubBytes substitution on a single word (column) of a State and returns the word."""
+
+    y = 0
+    for val in word:
+        sbox_y = val & 0x0F
+        sbox_x = val >> 4
+        word[y] = SBOX[sbox_x][sbox_y]
+        y += 1
     return word
 
 
 def R_con(rounds):
+    """Calculates the round constants (RCON) that is needed in the key expansion and returns them in an array."""
+
     rcon_arr = np.array([[0x00] * 4 for _ in range(rounds)])
     rcon = 0x01
-    rcon_arr[0][0] = rcon
+    rcon_arr[0][0] = rcon  # First round constant is set.
+
+    # This loop calculates the next round constant based on the previous one (see https://crypto.stackexchange.com/a/2420)
     for i in np.arange(1, rounds):
         rcon = (rcon << 1) ^ (0x11B & -(rcon >> 7))
         rcon_arr[i][0] = rcon
@@ -100,44 +117,45 @@ def R_con(rounds):
 
 
 def KeyExpansion(key):
+    """Expands key in to an array, w, containing a key for each round (incl. initial and final) and returns w."""
+
     w = np.array([[0] * 4 for _ in range(NB * (NR + 1))])
     Rcon = R_con(NR)
+
+    # Put the Cipher key in the array for the inital round
     for i in range(NK):
         w[i] = [(key[0][i]), (key[1][i]), (key[2][i]), (key[3][i])]
 
+    # Calculates the key for the next rounds based on the first and last column of previous key
     for i in np.arange(NK, NB * (NR + 1)):
-        temp = w[i - 1]
+        tmp = w[i - 1]
         if i % NK == 0:
-            temp = Subword(Rotword(temp)) ^ Rcon[int(i / NK) - 1]
-        w[i] = w[i - NK] ^ temp
+            # If the ith column of the array is the first column of a round key then implement transformations
+            tmp = Subword(Rotword(tmp)) ^ Rcon[int(i / NK) - 1]
+        w[i] = w[i - NK] ^ tmp
     return w
 
 
 def cypher(state):
-    answer = state
     w = KeyExpansion(KEY)
-    answer = AddRoundKey(state, w[0:NB])
-    # print(answer)
-    # print("")
+    # Initial round, only add roundkey
+    state = AddRoundKey(state, w[0:NB])
 
     for round in np.arange(1, NR):
-        answer = SubBytes(answer)
-        answer = ShiftRows(answer)
-        answer = Mixcolumns(answer)
-        answer = AddRoundKey(answer, w[round * NB : ((round + 1) * NB)])
-        # print(answer)
-        # print("")
+        state = SubBytes(state)
+        state = ShiftRows(state)
+        state = Mixcolumns(state)
+        state = AddRoundKey(state, w[round * NB : ((round + 1) * NB)])
 
-    answer = SubBytes(answer)
-    answer = ShiftRows(answer)
-    answer = AddRoundKey(answer, w[NR * NB : (NR + 1) * NB])
-
-    return answer
+    # Final round, no Mix Collumns
+    state = SubBytes(state)
+    state = ShiftRows(state)
+    state = AddRoundKey(state, w[NR * NB : (NR + 1) * NB])
+    return state
 
 
 if __name__ == "__main__":
-    print("AES")
-    # state = np.array([[0x19, 0xa0, 0x9a, 0xe9], [0x3d, 0xf4, 0xc6, 0xf8], [0xe3, 0xe2, 0x8d, 0x48], [0xbe, 0x2b, 0x2a, 0x08]])
+    # Create ciphertext (4 x NB)
     state = np.array(
         [
             [0x32, 0x88, 0x31, 0xE0],

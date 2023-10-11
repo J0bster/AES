@@ -1,3 +1,4 @@
+# Given table used to substitute bytes in the SubBytes function
 SBOX = [
     # Row 0
     [
@@ -304,7 +305,7 @@ SBOX = [
         0x16,
     ],
 ]
-
+# Given (4x4) matrix that is modulo multiplied in Rijndael's galios field with the columns in Mixcollumns function
 MODBOX = [
     # Row 0
     [0x02, 0x03, 0x01, 0x01],
@@ -316,6 +317,7 @@ MODBOX = [
     [0x03, 0x01, 0x01, 0x02],
 ]
 
+# Cipher key used for this AES Algorithm
 KEY = [
     # Row 0
     [0x2B, 0x28, 0xAB, 0x09],
