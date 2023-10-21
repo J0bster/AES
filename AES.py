@@ -6,12 +6,23 @@
 # Student numbers: 13461869, 13999788
 # Date: 11/10/2023
 # Comments: The document with the AES guidlines used for this implementation is https://doi.org/10.6028/NIST.FIPS.197-upd1
-# Motivation for design choices: We chose to implement the AES in python because in python you can easily use np.arrays in
-#                                the calculations for this algorithm, plus the functions are easy to follow in python.
+# Motivation for design choices: We chose to implement the AES-128 in python mainl y because in python you can easily use np.arrays
+#                                in the calculations for this algorithm and it has a lot of pre-made functions that came in handy for
+#                                the transformations that we implemented. The ciphertext are given as double arrays that represent a 4x4
+#                                table with 4 byte words in each column, so each inner array (row) contains either the 1st, 2nd, 3rd
+#                                or 4th elements of each column. This is done so because it makes it visually look like a 4x4 table,
+#                                which made it easier for us to compare the transformation functions with the document describing them.
+#                                The examples in the document were also represented in 4x4 tables which made comparing the actual
+#                                process of the cipher easier too. The key is also a double array, but in the key expansion function
+#                                the key schedule generated and returned as a  double array where the columns are contained in the
+#                                inner arrays, so the rows are the columns. This was done because it made it simpler to shift through
+#                                the columns but mainly because we have to xor them with a previous column and R-constants after applying
+#                                transformations, which is easily done using the xor operator on the whole column since it is an np.array.
+
 
 from collections import deque
 import numpy as np
-from Constants import SBOX, MODBOX, KEY
+from Constants import SBOX, MODBOX
 
 # Set that integers are printed as hexadecimals
 np.set_printoptions(formatter={"int": hex})
@@ -145,8 +156,34 @@ def KeyExpansion(key):
     return w
 
 
-def cypher(state):
-    w = KeyExpansion(KEY)
+def HexArray(length, input):
+    """Transforms a hexadecimal input to an nump array of the correct size"""
+    arr = np.array([[0x00] * 4 for _ in range(length)])
+    i = 0
+    j = 0
+    for index, val in np.ndenumerate(arr):
+        arr[index[0], index[1]] = int("0x" + input[i * 8 + j] + input[i * 8 + 1 + j], 0)
+        i += 1
+        if i == 4:
+            j += 2
+            i = 0
+    return arr
+
+
+def HexFormat(input):
+    """Formats an numpy array to the hexadecimal format"""
+    hexstr = ""
+    for col in range(len(input[0])):
+        for row in range(len(input)):
+            hexstr += str(f"{input[row][col]:x}")
+    return hexstr
+
+
+def cypher(input, key_input):
+    state = HexArray(NB, input)
+    key = HexArray(NK, key_input)
+
+    w = KeyExpansion(key)
     # Initial round, only add roundkey
     state = AddRoundKey(state, w[0:NB])
 
@@ -160,17 +197,12 @@ def cypher(state):
     state = SubBytes(state)
     state = ShiftRows(state)
     state = AddRoundKey(state, w[NR * NB : (NR + 1) * NB])
-    return state
+    return HexFormat(state)
 
 
 if __name__ == "__main__":
     # Create ciphertext (4 x NB)
-    state = np.array(
-        [
-            [0x32, 0x88, 0x31, 0xE0],
-            [0x43, 0x5A, 0x31, 0x37],
-            [0xF6, 0x30, 0x98, 0x07],
-            [0xA8, 0x8D, 0xA2, 0x34],
-        ]
-    )
-    print(cypher(state))
+    input = "3243f6a8885a308d313198a2e0370734"
+    key = "2b7e151628aed2a6abf7158809cf4f3c"
+
+    print(f" input: {input}\n", f"key: {key}\n\n", f"output: {cypher(input, key)}")
